@@ -45,7 +45,7 @@ python demos/01_basic.py --name rundir --repeat 5
 
 | Flag | Effect |
 | --- | --- |
-| `--config x.yaml` | Load field values from YAML. Unknown fields are an error. |
+| `--config x.yaml` | Load field values from YAML. Values are converted and checked like flags; unknown fields are an error. |
 | `--<field> value` | Override a field (`--top-k` and `--top_k` both work). |
 | `--<flag>` / `--no-<flag>` | Set a bool field. |
 | `--dump x.yaml` | Write the resolved config and exit. |

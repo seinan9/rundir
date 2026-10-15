@@ -2,10 +2,11 @@ import sys
 from argparse import ArgumentParser
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
+from typing import get_type_hints
 
 import yaml
 
-from rundir.cli import parse_into
+from rundir.cli import convert_value, parse_into
 
 
 @dataclass
@@ -31,7 +32,8 @@ def apply_config(cfg: RunConfig) -> bool:
     Returns whether --overwrite was passed. It is a run option, not part of the
     config, so it never ends up in a saved config.yaml.
     """
-    pre = ArgumentParser(add_help=False)
+    # No abbreviations: `--conf` must reach a `conf` field, not `--config`.
+    pre = ArgumentParser(add_help=False, allow_abbrev=False)
     pre.add_argument("--config", type=Path)
     pre.add_argument("--dump", type=Path)
     pre.add_argument("--overwrite", action="store_true")
@@ -63,8 +65,9 @@ def _apply_yaml(cfg: RunConfig, path: Path) -> None:
     unknown = set(values) - {f.name for f in fields(cfg)}
     if unknown:
         raise TypeError(f"Unknown config fields: {unknown}")
+    hints = get_type_hints(type(cfg))
     for key, value in values.items():
-        setattr(cfg, key, value)
+        setattr(cfg, key, convert_value(key, hints[key], value))
 
 
 def _dump_config(cfg: RunConfig, path: Path) -> None:

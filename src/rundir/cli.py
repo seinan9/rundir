@@ -30,12 +30,59 @@ def parse_into(cfg: Any, args: list[str]) -> None:
         setattr(cfg, f.name, getattr(parsed, f.name))
 
 
+def convert_value(name: str, hint: Any, value: Any) -> Any:
+    """Check and convert a value loaded from YAML for the field `name`.
+
+    Uses the same type rules as the CLI flags. Strings are parsed like flag
+    values (so `1e-3` becomes a float); other values must already have the
+    field's type.
+    """
+    hint, optional = _unwrap_optional(name, hint)
+    if value is None:
+        if optional:
+            return None
+        raise TypeError(f"{name}: expected {hint}, got None")
+    if hint is bool:
+        if not isinstance(value, bool):
+            raise TypeError(f"{name}: expected bool, got {value!r}")
+        return value
+    if get_origin(hint) is list:
+        if not isinstance(value, list):
+            raise TypeError(f"{name}: expected a list, got {value!r}")
+        (item,) = get_args(hint)
+        return [_convert_scalar(name, item, v) for v in value]
+    return _convert_scalar(name, hint, value)
+
+
+def _convert_scalar(name: str, hint: Any, value: Any) -> Any:
+    kwargs = _scalar_kwargs(name, hint)
+    type_ = kwargs["type"]
+    if isinstance(value, str):
+        try:
+            value = type_(value)
+        except ValueError:
+            raise ValueError(f"{name}: invalid {type_.__name__} value {value!r}")
+    elif type_ is float and isinstance(value, int) and not isinstance(value, bool):
+        value = float(value)
+    elif not isinstance(value, type_) or isinstance(value, bool):
+        raise TypeError(f"{name}: expected {type_.__name__}, got {value!r}")
+    if "choices" in kwargs and value not in kwargs["choices"]:
+        raise ValueError(f"{name}: {value!r} is not one of {kwargs['choices']}")
+    return value
+
+
+def _unwrap_optional(name: str, hint: Any) -> tuple[Any, bool]:
+    """`X | None` -> (X, True), anything else -> (hint, False)."""
+    if get_origin(hint) not in (Union, UnionType):
+        return hint, False
+    inner = [a for a in get_args(hint) if a is not NoneType]
+    if len(inner) != 1:
+        raise TypeError(f"Unsupported type for --{name}: {hint}")
+    return inner[0], True
+
+
 def _arg_kwargs(name: str, hint: Any) -> dict[str, Any]:
-    if get_origin(hint) in (Union, UnionType):
-        inner = [a for a in get_args(hint) if a is not NoneType]
-        if len(inner) != 1:
-            raise TypeError(f"Unsupported type for --{name}: {hint}")
-        hint = inner[0]
+    hint, _ = _unwrap_optional(name, hint)
     if hint is bool:
         return {"action": BooleanOptionalAction}
     if get_origin(hint) is list:
