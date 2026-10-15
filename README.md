@@ -2,6 +2,31 @@
 
 Run directories, layered configs and logging for experiment scripts. Depends only on `pyyaml`.
 
+- **Config as a dataclass.** Fields become CLI flags automatically, can be loaded from or dumped to
+  YAML, and are type-checked either way.
+- **One directory per run.** Outputs, the resolved config, a copy of the script and the log file
+  end up together. Existing runs are never overwritten by accident.
+- **Logging set up for you.** Output goes to stdout and the run's log file, including uncaught
+  exceptions.
+- **Works interactively.** In Jupyter or a REPL the same script runs unchanged and writes to a
+  throwaway scratch directory instead.
+
+## Install
+
+Requires Python 3.13+.
+
+```
+uv add git+https://github.com/seinan9/rundir
+```
+
+or 
+
+```
+pip install git+https://github.com/seinan9/rundir
+```
+
+## Quick start
+
 ```python
 from dataclasses import dataclass
 
@@ -24,6 +49,10 @@ run.done()
 ```
 python demos/01_basic.py --name rundir --repeat 5
 ```
+
+This creates `runs/basic/` containing `greeting.txt` and a `meta/` folder with the resolved
+config, a copy of the script, the log and a `done` marker. Running it again fails because
+`runs/basic/` already exists. Pass `--overwrite` to replace it, or `--output_dir` to pick a new one.
 
 ## Demos
 
