@@ -8,3 +8,9 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Demo outputs
+runs/
+configs/
+interactive/
+scratch/
