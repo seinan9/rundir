@@ -3,6 +3,8 @@ name = "rundir"
 version = "0.1.0"
 description = "Run directories, layered configs and logging for experiment scripts"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Sinan Kurtyigit", email = "sinan.kurtyigit@gmail.com" }
 ]
