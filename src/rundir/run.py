@@ -13,7 +13,7 @@ from rundir.config import RunConfig, apply_config
 _session_dirs: set[Path] = set()  # interactive dirs claimed by this kernel
 
 
-class Run:
+class Run[C: RunConfig = RunConfig]:
     """Creates the run directory, starts logging and records metadata.
 
     Interactively the config is used as given and output goes to a per-script
@@ -25,13 +25,14 @@ class Run:
 
     Subclasses add project behavior (seeding, quieting loggers, ...) by
     overriding `setup`, and can replace the logging setup via `setup_logging`.
-    They don't override `__init__`.
+    They don't override `__init__`. To use a richer config type inside
+    `setup`, subclass `Run[MyConfig]`.
     """
 
     interactive_root = "interactive"
-    cfg: RunConfig  # subclasses may narrow this to their config type
+    cfg: C
 
-    def __init__(self, cfg: RunConfig) -> None:
+    def __init__(self, cfg: C) -> None:
         source_script = _caller_script(self._caller_frame())
         self.cfg = cfg
         self._start_time = time.time()
